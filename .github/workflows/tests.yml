@@ -14,4 +14,4 @@ jobs:
         with:
           distribution: 'corretto'
           java-version: '17'
-      - run: mvn test
+      - run: mvn surefire:test
