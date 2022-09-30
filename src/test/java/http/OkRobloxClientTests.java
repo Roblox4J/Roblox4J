@@ -28,7 +28,7 @@ class NestedResponse {
 }
 
 public class OkRobloxClientTests {
-    private static final String ECHO_URL = "https://postman-echo.com/get";
+    private final String ECHO_URL = "https://postman-echo.com/get";
     private final OkRobloxClient okRobloxClient = new OkRobloxClient();
 
     /**
