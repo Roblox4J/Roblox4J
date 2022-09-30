@@ -55,7 +55,7 @@
     </dependencies>
 
     <build>
-        <testSourceDirectory>src/test/java</testSourceDirectory>
+        <testSourceDirectory>src/test/java/</testSourceDirectory>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -63,8 +63,7 @@
                 <version>3.0.0-M7</version>
                 <configuration>
                     <includes>
-                        <include>**/*Test.java</include>
-                        <include>**/*Tests.java</include>
+                        <include>*</include>
                     </includes>
                 </configuration>
             </plugin>
