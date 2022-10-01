@@ -12,7 +12,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static org.junit.Assert.*;
 
 public class ClientTests {
-    private static final long AUTHENTICATED_ID = 3925926743L; // TODO: CHANGE ME!
     private static final long ROBLOX_ID = 1;
     private static final int INVALID_USER_ID = 3;
     Client client = new Client();
@@ -80,13 +79,11 @@ public class ClientTests {
     public void testGetAuthenticatedAccount_WhenAuthenticatedValid() throws InvalidCookieException {
         // Pre-test.
         // We have to add our cookie in order to authenticate.
-        System.out.println(System.getProperty("robloSecurity"));
         this.client.setCookie(System.getProperty("robloSecurity"));
         Account account = this.client.getAuthenticatedAccount().block();
 
         // Test.
         assertNotNull(account);
-        assertEquals(account.getId(), AUTHENTICATED_ID);
     }
 
     /**
