@@ -2,6 +2,9 @@ package net.gestalt.http;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import net.gestalt.exceptions.InvalidCookieException;
+import net.gestalt.exceptions.InvalidRequestException;
+import net.gestalt.roblox.payloads.GeneralPayloads;
 import okhttp3.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -13,13 +16,16 @@ import java.io.IOException;
 public class OkRobloxClient extends OkHttpClient {
     private static final Logger LOGGER = LoggerFactory.getLogger(OkRobloxClient.class);
     private static final Gson GSON = new Gson();
+    private static final String COOKIE_SIGNATURE = "_|WARNING:-DO-NOT-SHARE-THIS.--Sharing-this-will-allow-someone-to" +
+            "-log-in-as-you-and-to-steal-your-ROBUX-and-items.|_";
+
+    private String cookie;
 
     /**
-     * Creates a Roblox client from the provided builder.
-     * @param builder The HTTP builder.
+     * Creates a Roblox client from the provided cookie.
      */
-    public OkRobloxClient(@NotNull Builder builder) {
-        super(builder);
+    public OkRobloxClient(String cookie) throws InvalidCookieException {
+        this.setCookie(cookie);
     }
 
     /**
@@ -32,8 +38,9 @@ public class OkRobloxClient extends OkHttpClient {
     /**
      * This method will execute a OkHttpClient call using the reactor core.
      * @param request The corresponding request.
-     * @param <T> The class that the response is being cast to.
-     * @return A reactor object.
+     * @param t       The response class.
+     * @param <T>     The class that the response will be unmarshalled to.
+     * @return The response object.
      */
     public <T> Mono<T> execute(Request request, Class<T> t) {
         return Mono.create(sink -> super.newCall(request).enqueue(new Callback() {
@@ -44,10 +51,18 @@ public class OkRobloxClient extends OkHttpClient {
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                // Make sure to catch the error if gson cannot cast.
+                String body = response.body().string();
+
                 try {
-                    T result = GSON.fromJson(response.body().string(), t);
-                    sink.success(result);
+                    try {
+                        // Try casting the body to the endpoint exception class.
+                        GeneralPayloads.EndpointError error = GSON.fromJson(body, GeneralPayloads.EndpointError.class);
+                        sink.error(InvalidRequestException.fromData(error.getErrors()[0]));
+                    } catch (Exception ignored) {
+                    }
+
+                    T serial = GSON.fromJson(body, t);
+                    sink.success(serial);
                 } catch (JsonSyntaxException e) {
                     sink.error(e);
                 } finally {
@@ -56,6 +71,32 @@ public class OkRobloxClient extends OkHttpClient {
                 }
             }
         }));
+    }
+
+    /**
+     * This method will automatically add the cross-reference token header.
+     * @param request The corresponding request.
+     * @param t       The response class.
+     * @param auth    Whether the request requires a cross-reference token.
+     * @param <T>     The class that the response will be unmarshalled to.
+     * @return The response object.
+     */
+    public <T> Mono<T> execute(@NotNull Request request, Class<T> t, boolean auth) throws InvalidCookieException {
+        // TODO: Make this method more reactive.
+        if (auth) {
+            String token = this.getCrossReference().block();
+
+            // TODO: Raise error if token wasn't retrievable.
+            if (token != null)
+                request = request.newBuilder()
+                        .header("Cookie", ".ROBLOSECURITY=%s".formatted(this.cookie))
+                        .header("X-CSRF-TOKEN", token)
+                        .build();
+            else
+                throw new InvalidCookieException();
+        }
+
+        return this.execute(request, t);
     }
 
     /**
@@ -69,5 +110,42 @@ public class OkRobloxClient extends OkHttpClient {
         } catch (Exception e) {
             LOGGER.warn("Failed to silently close response.", e);
         }
+    }
+
+    /**
+     * This method will fetch a cross-reference token for the session.
+     * @return A mono object containing the token.
+     */
+    private @NotNull Mono<String> getCrossReference() {
+        Request request = new Request.Builder()
+                .url("https://auth.roblox.com/v2/logout")
+                .post(RequestBody.create(null, new byte[0]))
+                .header("Cookie", ".ROBLOSECURITY=%s".formatted(this.cookie))
+                .build();
+        return Mono.<String>create(sink -> this.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                sink.error(e);
+            }
+
+            @Override
+            public void onResponse(@NotNull Call call, @NotNull Response response) {
+                // The token is in the "x-csrf-token" header.
+                String token = response.headers().get("x-csrf-token");
+                sink.success(token);
+            }
+        })).onErrorResume(e -> Mono.empty());
+    }
+
+    /**
+     * This method will set the Roblox cookie field.
+     * @param cookie The Roblox cookie.
+     */
+    public void setCookie(String cookie) throws InvalidCookieException {
+        // If the cookie doesn't begin with ".ROBLOSECURITY," then it's invalid.
+        if (cookie != null && cookie.length() > 0 && !cookie.startsWith(COOKIE_SIGNATURE))
+            throw new InvalidCookieException();
+
+        this.cookie = cookie;
     }
 }

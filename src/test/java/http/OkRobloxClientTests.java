@@ -35,8 +35,8 @@ public class OkRobloxClientTests {
      * This will test if the client is able to send a simple ping request. It'll also test basic casting.
      */
     @Test
-    public void testResponse() {
-        // Post-test.
+    public void testExecute_WhenResponseValid() {
+        // Pre-test.
         Request request = new Request.Builder()
                 .url(ECHO_URL)
                 .build();
@@ -51,8 +51,8 @@ public class OkRobloxClientTests {
      * This will test if the parser recognizes nested information.
      */
     @Test
-    public void testNestedResponse() {
-        // Post-test.
+    public void testExecute_WhenBodyNested() {
+        // Pre-test.
         Request request = new Request.Builder()
                 .url(ECHO_URL)
                 .build();
