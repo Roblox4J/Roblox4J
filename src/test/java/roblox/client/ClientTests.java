@@ -80,6 +80,7 @@ public class ClientTests {
     public void testGetAuthenticatedAccount_WhenAuthenticatedValid() throws InvalidCookieException {
         // Pre-test.
         // We have to add our cookie in order to authenticate.
+        System.out.println(System.getProperty("robloSecurity"));
         this.client.setCookie(System.getProperty("robloSecurity"));
         Account account = this.client.getAuthenticatedAccount().block();
 
