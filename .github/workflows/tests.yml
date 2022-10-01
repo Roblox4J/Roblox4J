@@ -14,4 +14,4 @@ jobs:
         with:
           distribution: 'corretto'
           java-version: '17'
-      - run: mvn test -DrobloSecurity="${ secrets.ROBLOSECURITY }"
+      - run: mvn test -DrobloSecurity="${{ secrets.ROBLOSECURITY }}"
