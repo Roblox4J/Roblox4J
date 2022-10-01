@@ -14,6 +14,8 @@ jobs:
         with:
           distribution: 'corretto'
           java-version: '17'
-      - run: mvn test
+      - run: maven test
         env:
           robloSecurity: ${{ secrets.ROBLOSECURITY }}
+        with:
+          ARGS: "-DrobloSecurity=${{ env.robloSecurity }}"
