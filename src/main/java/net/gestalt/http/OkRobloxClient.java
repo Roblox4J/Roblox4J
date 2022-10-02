@@ -141,6 +141,7 @@ public class OkRobloxClient extends OkHttpClient {
      * This method will set the Roblox cookie field.
      * @param cookie The Roblox cookie.
      */
+    @ExcludeFromJacocoGeneratedReport
     public void setCookie(String cookie) throws InvalidCookieException {
         // If the cookie doesn't begin with ".ROBLOSECURITY," then it's invalid.
         if (cookie != null && cookie.length() > 0 && !cookie.startsWith(COOKIE_SIGNATURE))
