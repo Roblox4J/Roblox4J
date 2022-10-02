@@ -5,6 +5,7 @@ import com.google.gson.JsonSyntaxException;
 import net.gestalt.exceptions.InvalidCookieException;
 import net.gestalt.exceptions.InvalidRequestException;
 import net.gestalt.roblox.payloads.GeneralPayloads;
+import net.gestalt.utils.ExcludeFromJacocoGeneratedReport;
 import okhttp3.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -38,6 +39,7 @@ public class OkRobloxClient extends OkHttpClient {
     public <T> Mono<T> execute(Request request, Class<T> t) {
         return Mono.create(sink -> super.newCall(request).enqueue(new Callback() {
             @Override
+            @ExcludeFromJacocoGeneratedReport
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
                 sink.error(e);
             }
@@ -93,6 +95,7 @@ public class OkRobloxClient extends OkHttpClient {
      * This method will quietly close the provided response.
      * @param response The response.
      */
+    @ExcludeFromJacocoGeneratedReport
     private void closeQuietly(@NotNull Response response) {
         try {
             response.body();
@@ -115,6 +118,7 @@ public class OkRobloxClient extends OkHttpClient {
 
         return Mono.create(sink -> this.newCall(request).enqueue(new Callback() {
             @Override
+            @ExcludeFromJacocoGeneratedReport
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
                 sink.error(e);
             }

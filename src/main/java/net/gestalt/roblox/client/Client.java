@@ -9,6 +9,7 @@ import net.gestalt.exceptions.InvalidCookieException;
 import net.gestalt.http.OkRobloxClient;
 import net.gestalt.roblox.accounts.Account;
 import net.gestalt.roblox.payloads.AccountPayloads;
+import net.gestalt.utils.ExcludeFromJacocoGeneratedReport;
 import okhttp3.MediaType;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -94,6 +95,7 @@ public class Client {
      * This method will set the cookie field.
      * @param cookie The Roblox cookie.
      */
+    @ExcludeFromJacocoGeneratedReport
     public void setCookie(String cookie) throws InvalidCookieException {
         this.okRobloxClient.setCookie(cookie);
     }
