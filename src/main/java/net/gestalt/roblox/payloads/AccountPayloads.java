@@ -47,4 +47,16 @@ public interface AccountPayloads {
         @Expose
         String name, displayName;
     }
+    @Getter
+    class UsernameHistoryPayload implements CursorInterface<UsernameHistoryPayload.Data> {
+        @Getter
+        public static class Data {
+            @Expose
+            private String name;
+        }
+        @Expose
+        private String previousPageCursor, nextPageCursor;
+        @Expose
+        Data[] data;
+    }
 }
