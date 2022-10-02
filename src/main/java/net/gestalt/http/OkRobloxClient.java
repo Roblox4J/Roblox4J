@@ -4,15 +4,20 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import net.gestalt.exceptions.InvalidCookieException;
 import net.gestalt.exceptions.InvalidRequestException;
+import net.gestalt.roblox.payloads.CursorInterface;
 import net.gestalt.roblox.payloads.GeneralPayloads;
 import net.gestalt.utils.ExcludeFromJacocoGeneratedReport;
 import okhttp3.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.retry.Repeat;
 
 import java.io.IOException;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class OkRobloxClient extends OkHttpClient {
     private static final Logger LOGGER = LoggerFactory.getLogger(OkRobloxClient.class);
@@ -88,7 +93,34 @@ public class OkRobloxClient extends OkHttpClient {
                     // Otherwise, return the request.
                     return request;
                 })
-                .flatMap(request1 -> this.execute(request1, t));
+                .flatMap(req -> this.execute(req, t));
+    }
+
+    /**
+     * This method will fetch a resource with multiple cursors. This will end up using multiple requests.
+     * @param request The request. It will be edited to add the next cursor.
+     * @param t The object the response contains.
+     * @param <T> The object the response contains.
+     * @return The response.
+     */
+    @SuppressWarnings("rawtypes")
+    public <T extends CursorInterface> Flux<T> executeMultiCursor(Request request, Class<T> t) {
+        AtomicReference<Request> req = new AtomicReference<>(request);
+
+        // We need to repeat getting the body and setting the cursor until the cursor is nothing.
+        return this.execute(req.get(), t)
+                .map(response -> {
+                    // Set the cursor for the next request.
+                    String cursor = response.getNextPageCursor();
+                    req.set(request.newBuilder()
+                            .url(request.url().newBuilder()
+                                    .addQueryParameter("cursor", cursor)
+                                    .build())
+                            .build());
+                    return response;
+                })
+                .repeatWhen(Repeat.onlyIf(repeatContext -> !Objects.equals(req.get().url()
+                        .queryParameter("cursor"), "")));
     }
 
     /**
@@ -97,12 +129,8 @@ public class OkRobloxClient extends OkHttpClient {
      */
     @ExcludeFromJacocoGeneratedReport
     private void closeQuietly(@NotNull Response response) {
-        try {
-            response.body();
-            response.close();
-        } catch (Exception e) {
-            LOGGER.warn("Failed to silently close response.", e);
-        }
+        response.body();
+        response.close();
     }
 
     /**
