@@ -17,3 +17,5 @@ jobs:
       - run: mvn test "-DrobloSecurity=${{ env.robloSecurity }}"
         env:
           robloSecurity: ${{ secrets.ROBLOSECURITY }}
+      - name: jacoco-badge-generator
+        uses: cicirello/jacoco-badge-generator@v2.7.0
