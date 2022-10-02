@@ -14,8 +14,6 @@ jobs:
         with:
           distribution: 'corretto'
           java-version: '17'
-      - name: Setup Maven
-        uses: stCarolas/setup-maven@v4.4
       - run: mvn test "-DrobloSecurity=${{ env.robloSecurity }}"
         env:
           robloSecurity: ${{ secrets.ROBLOSECURITY }}
