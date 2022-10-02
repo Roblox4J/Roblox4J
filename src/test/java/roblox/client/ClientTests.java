@@ -1,7 +1,7 @@
 package roblox.client;
 
+import net.gestalt.exceptions.InvalidAccountNameException;
 import net.gestalt.exceptions.InvalidCookieException;
-import net.gestalt.exceptions.InvalidRequestException;
 import net.gestalt.roblox.accounts.Account;
 import net.gestalt.roblox.client.Client;
 import org.junit.Test;
@@ -13,7 +13,6 @@ import static org.junit.Assert.*;
 
 public class ClientTests {
     private static final long ROBLOX_ID = 1;
-    private static final int INVALID_USER_ID = 3;
     Client client = new Client();
 
     /**
@@ -21,12 +20,16 @@ public class ClientTests {
      */
     @Test
     public void testGetAccountWithId_WhenIdInvalid() {
-        // Test.
+        AtomicBoolean happened = new AtomicBoolean(false);
+
+        // Pre-test.
         this.client.getAccount(-1L)
-                .doOnError(InvalidRequestException.class,
-                        invalidRequestException -> assertEquals(invalidRequestException.getCode(), INVALID_USER_ID))
+                .doOnError(r -> happened.set(true))
                 .onErrorResume(e -> Mono.empty())
                 .block();
+
+        // Test.
+        assertTrue(happened.get());
     }
 
     /**
@@ -39,7 +42,7 @@ public class ClientTests {
 
         // Test.
         assertNotNull(account);
-        assertEquals(account.getId(), ROBLOX_ID);
+        assertEquals(account.id(), ROBLOX_ID);
     }
 
     /**
@@ -52,7 +55,7 @@ public class ClientTests {
 
         // Test.
         assertNotNull(account);
-        assertEquals(account.getId(), 1);
+        assertEquals(account.id(), 1);
     }
 
     /**
@@ -65,7 +68,7 @@ public class ClientTests {
         // Test.
         this.client.getAccountFromUsername("INVALIDINVALIDINVALIDINVALIDINVALIDINVALID")
                 .doOnError(r -> happened.set(true))
-                .onErrorResume(e -> Mono.empty())
+                .onErrorResume(InvalidAccountNameException.class, e -> Mono.empty())
                 .block();
 
         assertTrue(happened.get());
@@ -79,7 +82,9 @@ public class ClientTests {
     public void testGetAuthenticatedAccount_WhenAuthenticatedValid() throws InvalidCookieException {
         // Pre-test.
         // We have to add our cookie in order to authenticate.
-        this.client.setCookie(System.getProperty("robloSecurity"));
+        String token = System.getProperty("robloSecurity") != null ? System.getProperty("robloSecurity") :
+                System.getenv("robloSecurity");
+        this.client.setCookie(token);
         Account account = this.client.getAuthenticatedAccount().block();
 
         // Test.
@@ -96,8 +101,8 @@ public class ClientTests {
 
         this.client.setCookie(null);
         this.client.getAuthenticatedAccount()
-                .doOnError(r -> happened.set(true))
-                .onErrorResume(r -> Mono.empty())
+                .doOnError(e -> happened.set(true))
+                .onErrorResume(e -> Mono.empty())
                 .block();
 
         assertTrue(happened.get());

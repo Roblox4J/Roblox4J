@@ -22,13 +22,6 @@ public class OkRobloxClient extends OkHttpClient {
     private String cookie;
 
     /**
-     * Creates a Roblox client from the provided cookie.
-     */
-    public OkRobloxClient(String cookie) throws InvalidCookieException {
-        this.setCookie(cookie);
-    }
-
-    /**
      * Creates a Roblox client.
      */
     public OkRobloxClient() {
@@ -58,8 +51,7 @@ public class OkRobloxClient extends OkHttpClient {
                         // Try casting the body to the endpoint exception class.
                         GeneralPayloads.EndpointError error = GSON.fromJson(body, GeneralPayloads.EndpointError.class);
                         sink.error(InvalidRequestException.fromData(error.getErrors()[0]));
-                    } catch (Exception ignored) {
-                    }
+                    } catch (Exception ignored) {}
 
                     T serial = GSON.fromJson(body, t);
                     sink.success(serial);
@@ -81,22 +73,20 @@ public class OkRobloxClient extends OkHttpClient {
      * @param <T>     The class that the response will be unmarshalled to.
      * @return The response object.
      */
-    public <T> Mono<T> execute(@NotNull Request request, Class<T> t, boolean auth) throws InvalidCookieException {
-        // TODO: Make this method more reactive.
-        if (auth) {
-            String token = this.getCrossReference().block();
+    public <T> Mono<T> execute(@NotNull Request request, Class<T> t, boolean auth) {
+        return this.getCrossReference()
+                .mapNotNull(token -> {
+                    // If authentication is required, we have to add the corresponding headers.
+                    if (auth)
+                        return request.newBuilder()
+                                .addHeader("Cookie", ".ROBLOSECURITY=%s".formatted(this.cookie))
+                                .addHeader("X-CSRF-TOKEN", token)
+                                .build();
 
-            // TODO: Raise error if token wasn't retrievable.
-            if (token != null)
-                request = request.newBuilder()
-                        .header("Cookie", ".ROBLOSECURITY=%s".formatted(this.cookie))
-                        .header("X-CSRF-TOKEN", token)
-                        .build();
-            else
-                throw new InvalidCookieException();
-        }
-
-        return this.execute(request, t);
+                    // Otherwise, return the request.
+                    return request;
+                })
+                .flatMap(request1 -> this.execute(request1, t));
     }
 
     /**
@@ -119,10 +109,11 @@ public class OkRobloxClient extends OkHttpClient {
     private @NotNull Mono<String> getCrossReference() {
         Request request = new Request.Builder()
                 .url("https://auth.roblox.com/v2/logout")
-                .post(RequestBody.create(null, new byte[0]))
+                .post(RequestBody.create(new byte[0], null))
                 .header("Cookie", ".ROBLOSECURITY=%s".formatted(this.cookie))
                 .build();
-        return Mono.<String>create(sink -> this.newCall(request).enqueue(new Callback() {
+
+        return Mono.create(sink -> this.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
                 sink.error(e);
@@ -132,9 +123,14 @@ public class OkRobloxClient extends OkHttpClient {
             public void onResponse(@NotNull Call call, @NotNull Response response) {
                 // The token is in the "x-csrf-token" header.
                 String token = response.headers().get("x-csrf-token");
+
+                // If the token is null, the cookie was invalid.
+                if (token == null)
+                    sink.error(new InvalidCookieException());
+
                 sink.success(token);
             }
-        })).onErrorResume(e -> Mono.empty());
+        }));
     }
 
     /**

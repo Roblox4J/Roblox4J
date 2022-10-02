@@ -6,7 +6,6 @@ import lombok.Setter;
 import net.gestalt.exceptions.InvalidAccountIdException;
 import net.gestalt.exceptions.InvalidAccountNameException;
 import net.gestalt.exceptions.InvalidCookieException;
-import net.gestalt.exceptions.InvalidRequestException;
 import net.gestalt.http.OkRobloxClient;
 import net.gestalt.roblox.accounts.Account;
 import net.gestalt.roblox.payloads.AccountPayloads;
@@ -21,9 +20,6 @@ public class Client {
     private final static Gson GSON = new Gson();
     private final OkRobloxClient okRobloxClient;
 
-    public Client(String cookie) throws InvalidCookieException {
-        this.okRobloxClient = new OkRobloxClient(cookie);
-    }
     public Client() {
         this.okRobloxClient = new OkRobloxClient();
     }
@@ -33,24 +29,26 @@ public class Client {
      * @param accountName The username of the account.
      */
     public Mono<Account> getAccountFromUsername(String accountName) {
+        // Pre-request.
+        // We'll set up the payload here.
         AccountPayloads.GetAccountsByNamePayload payload = new AccountPayloads.GetAccountsByNamePayload();
         payload.setUsernames(new String[]{ accountName });
+
         Request request = new Request.Builder()
                 .url("https://users.roblox.com/v1/usernames/users")
                 .post(RequestBody.create(GSON.toJson(payload), MediaType.parse("application/json")))
                 .build();
-        return Mono.create(sink -> this.okRobloxClient.execute(request, AccountPayloads.AccountNamePayload.class)
-                .doOnError(sink::error)
-                .map(r -> {
-                    AccountPayloads.AccountNamePayload.Data[] data = r.getData();
-                    // Make sure there's data.
-                    if (data.length == 0)
-                        sink.error(new InvalidAccountNameException());
-                    return data[0].getId();
+
+        // We will have to map the multiple username's into one account.
+        // If it errors, return an invalid account name exception.
+        return this.okRobloxClient.execute(request, AccountPayloads.AccountNamePayload.class)
+                .map(accountNamePayload -> {
+                    AccountPayloads.AccountNamePayload.Data[] data = accountNamePayload.getData();
+                    return data[0];
                 })
-                .flatMap(this::getAccount)
-                .doOnSuccess(sink::success)
-                .block());
+                .onErrorResume(e -> Mono.error(new InvalidAccountNameException())) // Invalid username.
+                .map(AccountPayloads.AccountNamePayload.Data::getId)
+                .flatMap(this::getAccount);
     }
 
     /**
@@ -69,13 +67,12 @@ public class Client {
         Request request = new Request.Builder()
                 .url("https://users.roblox.com/v1/users/%s".formatted(id))
                 .build();
-        return Mono.create(sink -> this.okRobloxClient.execute(request, AccountPayloads.AccountPayload.class)
-                .doOnError(InvalidRequestException.class, r ->
-                        sink.error(new InvalidAccountIdException()))
-                .doOnError(sink::error)
-                .map(r -> Account.fromData(r, this.okRobloxClient))
-                .doOnSuccess(sink::success)
-                .block());
+
+        // Contains a mono that'll return an account.
+        // Map the payload to an actual account.
+        return this.okRobloxClient.execute(request, AccountPayloads.AccountPayload.class)
+                .onErrorResume(e -> Mono.error(new InvalidAccountIdException()))
+                .map(accountPayload -> Account.fromData(accountPayload, this.okRobloxClient));
     }
 
     /**
@@ -86,18 +83,11 @@ public class Client {
         Request request = new Request.Builder()
                 .url("https://users.roblox.com/v1/users/authenticated")
                 .build();
-        return Mono.create(sink -> {
-            try {
-                this.okRobloxClient.execute(request, AccountPayloads.AuthenticatedAccount.class,
-                                true)
-                        .doOnError(sink::error)
-                        .flatMap(r -> this.getAccount(r.getId()))
-                        .doOnSuccess(sink::success)
-                        .block();
-            } catch (InvalidCookieException e) {
-                sink.error(e);
-            }
-        });
+
+        // Map the authenticated user to an account object.
+        return this.okRobloxClient.execute(request, AccountPayloads.AuthenticatedAccount.class, true)
+                .onErrorResume(e -> Mono.error(new InvalidCookieException())) // The invalid cookie is the issue.
+                .flatMap(account -> this.getAccount(account.getId()));
     }
 
     /**
