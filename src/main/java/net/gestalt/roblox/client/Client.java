@@ -47,7 +47,7 @@ public class Client {
                     AccountPayloads.AccountNamePayload.Data[] data = accountNamePayload.getData();
                     return data[0];
                 })
-                .onErrorResume(e -> Mono.error(new InvalidAccountNameException())) // Invalid username.
+                .onErrorResume(e -> Mono.error(InvalidAccountNameException::new)) // Invalid username.
                 .map(AccountPayloads.AccountNamePayload.Data::getId)
                 .flatMap(this::getAccount);
     }
@@ -72,7 +72,7 @@ public class Client {
         // Contains a mono that'll return an account.
         // Map the payload to an actual account.
         return this.okRobloxClient.execute(request, AccountPayloads.AccountPayload.class)
-                .onErrorResume(e -> Mono.error(new InvalidAccountIdException()))
+                .onErrorResume(e -> Mono.error(InvalidAccountIdException::new))
                 .map(accountPayload -> Account.fromData(accountPayload, this.okRobloxClient));
     }
 
@@ -87,7 +87,7 @@ public class Client {
 
         // Map the authenticated user to an account object.
         return this.okRobloxClient.execute(request, AccountPayloads.AuthenticatedAccount.class, true)
-                .onErrorResume(e -> Mono.error(new InvalidCookieException())) // The invalid cookie is the issue.
+                .onErrorResume(e -> Mono.error(InvalidCookieException::new)) // The invalid cookie is the issue.
                 .flatMap(account -> this.getAccount(account.getId()));
     }
 

@@ -91,7 +91,9 @@ public class OkRobloxClient extends OkHttpClient {
                                 .build();
 
                     // Otherwise, return the request.
-                    return request;
+                    return request.newBuilder()
+                            .addHeader("Cookie", ".ROBLOSECURITY=%s".formatted(this.cookie))
+                            .build();
                 })
                 .flatMap(req -> this.execute(req, t));
     }
