@@ -9,7 +9,7 @@ import static org.junit.Assert.*;
 
 public class AccountTests {
     private final Client client = new Client();
-    private final long accountId = 1116067525L;
+    private final long accountId = 3222418374L;
     private final Account account = this.client.getAccount(accountId).block();
 
     public AccountTests() throws InvalidCookieException {
@@ -38,10 +38,20 @@ public class AccountTests {
         assertEquals(Boolean.FALSE, this.account.canMessage().block()); // We can't send messages to ourselves.
     }
 
+    /**
+     * This method will test if we are able to get an account's friends.
+     */
     @Test
-    public void testCanFriend() {
+    public void testCanGetFriends() {
         // Test.
         assertNotNull(this.account);
         this.account.getFriends().block();
+    }
+
+    @Test
+    public void testSendMessage() {
+        // Test.
+        assertNotNull(this.account);
+        this.account.sendMessage("Hi", "Hello").block();
     }
 }

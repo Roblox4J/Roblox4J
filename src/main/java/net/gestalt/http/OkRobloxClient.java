@@ -60,8 +60,11 @@ public class OkRobloxClient extends OkHttpClient {
                         sink.error(InvalidRequestException.fromData(error.getErrors()[0]));
                     } catch (Exception ignored) {}
 
-                    T serial = GSON.fromJson(body, t);
-                    sink.success(serial);
+                    if (t != null) {
+                        sink.success(GSON.fromJson(body, t));
+                        return;
+                    }
+                    sink.success();
                 } catch (JsonSyntaxException e) {
                     sink.error(e);
                 } finally {

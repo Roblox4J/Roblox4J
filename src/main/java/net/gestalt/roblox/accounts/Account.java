@@ -1,11 +1,14 @@
 package net.gestalt.roblox.accounts;
 
+import com.google.gson.Gson;
 import net.gestalt.exceptions.InvalidCookieException;
 import net.gestalt.http.OkRobloxClient;
 import net.gestalt.roblox.payloads.AccountPayloads;
 import net.gestalt.roblox.payloads.FriendPayloads;
 import net.gestalt.roblox.payloads.MessagePayloads;
+import okhttp3.MediaType;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import reactor.core.publisher.Flux;
@@ -13,6 +16,7 @@ import reactor.core.publisher.Mono;
 
 public record Account(OkRobloxClient okRobloxClient, String description, String date, String externalAppDisplayName,
                       String name, String displayName, boolean isBanned, boolean hasVerifiedBadge, long id) {
+    private static final Gson GSON = new Gson();
     /**
      * This method will fetch a list of the accounts previous usernames.
      * @return A flux object that'll contain name objects.
@@ -54,6 +58,30 @@ public record Account(OkRobloxClient okRobloxClient, String description, String 
         return this.okRobloxClient.execute(request, MessagePayloads.CanMessagePayload.class, false)
                 .onErrorResume(e -> Mono.error(InvalidCookieException::new))
                 .map(MessagePayloads.CanMessagePayload::isCanMessage);
+    }
+
+    /**
+     * This method will send a message to the account.
+     * @param subject The body of the message.
+     * @param body The body of the message.
+     * @return When the request has been sent.
+     */
+    public Mono<Void> sendMessage(String subject, String body) {
+        // Pre-request.
+        // Create the payload.
+        MessagePayloads.SendMessagePayload messagePayload = new MessagePayloads.SendMessagePayload();
+        messagePayload.setSubject(subject);
+        messagePayload.setBody(body);
+        messagePayload.setRecipientId(this.id);
+
+        // Make the request.
+        Request request = new Request.Builder()
+                .url("https://privatemessages.roblox.com/v1/messages/send")
+                .post(RequestBody.create(GSON.toJson(messagePayload), MediaType.parse("application/json")))
+                .build();
+
+        // Send the request.
+        return this.okRobloxClient.execute(request, null, true);
     }
 
     /**
