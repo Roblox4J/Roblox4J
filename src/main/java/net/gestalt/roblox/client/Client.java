@@ -3,12 +3,12 @@ package net.gestalt.roblox.client;
 import com.google.gson.Gson;
 import lombok.Getter;
 import lombok.Setter;
-import net.gestalt.exceptions.InvalidAccountIdException;
-import net.gestalt.exceptions.InvalidAccountNameException;
-import net.gestalt.exceptions.InvalidCookieException;
+import net.gestalt.exceptions.*;
 import net.gestalt.http.OkRobloxClient;
 import net.gestalt.roblox.accounts.Account;
+import net.gestalt.roblox.groups.Group;
 import net.gestalt.roblox.payloads.AccountPayloads;
+import net.gestalt.roblox.payloads.GroupPayloads;
 import net.gestalt.utils.ExcludeFromJacocoGeneratedReport;
 import okhttp3.MediaType;
 import okhttp3.Request;
@@ -72,8 +72,39 @@ public class Client {
         // Contains a mono that'll return an account.
         // Map the payload to an actual account.
         return this.okRobloxClient.execute(request, AccountPayloads.AccountPayload.class)
-                .onErrorResume(e -> Mono.error(InvalidAccountIdException::new))
+                .onErrorResume(InvalidRequestException.class, e -> {
+                    if (e.getCode() == 3)
+                        return Mono.error(InvalidIdException::new);
+                    return Mono.error(e);
+                })
                 .map(accountPayload -> Account.fromData(accountPayload, this.okRobloxClient));
+    }
+
+    /**
+     * This method will fetch the provided group.
+     * @param id The id of the group
+     * @return A mono object containing the group.
+     */
+    public Mono<Group> getGroup(long id) {
+        return this.getGroup(String.valueOf(id));
+    }
+    /**
+     * This method will fetch a group.
+     * @param id The id belonging to the group.
+     * @return A mono containing the group.
+     */
+    public Mono<Group> getGroup(String id) {
+        Request request = new Request.Builder()
+                .url("https://groups.roblox.com/v1/groups/%s".formatted(id))
+                .build();
+
+        return this.okRobloxClient.execute(request, GroupPayloads.GetGroupPayload.class)
+                .onErrorResume(InvalidRequestException.class, e -> {
+                    if (e.getCode() == 1)
+                        return Mono.error(InvalidIdException::new);
+                    return Mono.error(e);
+                })
+                .map(groupPayload -> Group.fromData(groupPayload, this.okRobloxClient));
     }
 
     /**

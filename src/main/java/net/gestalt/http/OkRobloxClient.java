@@ -2,8 +2,7 @@ package net.gestalt.http;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
-import net.gestalt.exceptions.InvalidCookieException;
-import net.gestalt.exceptions.InvalidRequestException;
+import net.gestalt.exceptions.*;
 import net.gestalt.roblox.payloads.CursorInterface;
 import net.gestalt.roblox.payloads.GeneralPayloads;
 import net.gestalt.utils.ExcludeFromJacocoGeneratedReport;
@@ -57,7 +56,18 @@ public class OkRobloxClient extends OkHttpClient {
                     try {
                         // Try casting the body to the endpoint exception class.
                         GeneralPayloads.EndpointError error = GSON.fromJson(body, GeneralPayloads.EndpointError.class);
-                        sink.error(InvalidRequestException.fromData(error.getErrors()[0]));
+                        InvalidRequestException requestException = InvalidRequestException
+                                .fromData(error.getErrors()[0]);
+                        // Try to emit a very specific error.
+                        switch (requestException.getCode())
+                        {
+                            case 0 -> sink.error(new InvalidCookieException());
+                            case 12 -> sink.error(new InsufficientRobuxException());
+                            case 14 -> sink.error(new ModeratedException());
+                            case 17 -> sink.error(new RateLimitException());
+                            case 20 -> sink.error(new NameTakenException());
+                            default -> sink.error(requestException); // Just throw the error.
+                        }
                     } catch (Exception ignored) {}
 
                     if (t != null) {
