@@ -200,6 +200,7 @@ public record Group(long id, String name, String description, int memberCount, b
                 .onErrorResume(InvalidRequestException.class, e -> switch (e.getCode()) {
                     case 15 -> Mono.error(NotMemberException::new);
                     case 17 -> Mono.error(NoPermissionException::new);
+                    case 25 -> Mono.error(NoVerificationException::new);
                     default -> Mono.error(e);
                 });
     }

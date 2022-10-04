@@ -1,9 +1,6 @@
 package roblox.groups;
 
-import net.gestalt.exceptions.AlreadyOwnedException;
-import net.gestalt.exceptions.InvalidCookieException;
-import net.gestalt.exceptions.InvalidIdException;
-import net.gestalt.exceptions.ModeratedException;
+import net.gestalt.exceptions.*;
 import net.gestalt.roblox.client.Client;
 import net.gestalt.roblox.groups.Group;
 import org.junit.Test;
@@ -140,8 +137,8 @@ public class GroupTests {
         AtomicBoolean happened = new AtomicBoolean(false);
 
         this.group.changeOwner("-1")
-                .doOnError(InvalidIdException.class, e -> happened.set(true))
-                .onErrorResume(InvalidIdException.class, e -> Mono.empty())
+                .doOnError(NoVerificationException.class, e -> happened.set(true))
+                .onErrorResume(NoVerificationException.class, e -> Mono.empty())
                 .block();
 
         // Test.
