@@ -139,7 +139,7 @@ public class GroupTests {
         // Pre-test.
         AtomicBoolean happened = new AtomicBoolean(false);
 
-        this.group.kickAccount("-1")
+        this.group.changeOwner("-1")
                 .doOnError(InvalidIdException.class, e -> happened.set(true))
                 .onErrorResume(InvalidIdException.class, e -> Mono.empty())
                 .block();
