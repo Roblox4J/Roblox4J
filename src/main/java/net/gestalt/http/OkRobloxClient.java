@@ -59,15 +59,10 @@ public class OkRobloxClient extends OkHttpClient {
                         InvalidRequestException requestException = InvalidRequestException
                                 .fromData(error.getErrors()[0]);
                         // Try to emit a very specific error.
-                        switch (requestException.getCode())
-                        {
-                            case 0 -> sink.error(new InvalidCookieException());
-                            case 12 -> sink.error(new InsufficientRobuxException());
-                            case 14 -> sink.error(new ModeratedException());
-                            case 17 -> sink.error(new RateLimitException());
-                            case 20 -> sink.error(new NameTakenException());
-                            default -> sink.error(requestException); // Just throw the error.
-                        }
+                        if (requestException.getCode() == 0)
+                            sink.error(new InvalidCookieException());
+                        else
+                            sink.error(requestException); // Just throw the error.
                     } catch (Exception ignored) {}
 
                     if (t != null) {
