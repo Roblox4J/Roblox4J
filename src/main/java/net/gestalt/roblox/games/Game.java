@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 public record Game(long id, long rootPlaceId, String name, String description, String sourceName,
                    String sourceDescription, String created, String updated, String universeAvatarType, String genre,
-                   int price, int playing, int visits, int maxPlayers, int favoriteCount,
+                   int price, int playing, long visits, int maxPlayers, int favoriteCount,
                    String[] allowedGearGenres, String[] allowedGearCategories, boolean isGenreEnforced,
                    boolean copyingAllowed, boolean studioAccessToApisAllowed, boolean createVipServersAllowed,
                    boolean isAllGenre, boolean isFavoritedByUser, OkRobloxClient okRobloxClient) {

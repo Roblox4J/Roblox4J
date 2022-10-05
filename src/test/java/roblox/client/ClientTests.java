@@ -109,9 +109,26 @@ public class ClientTests {
         assertTrue(happened.get());
     }
 
+    /**
+     * This method will test if we are able to fetch a popular game.
+     */
     @Test
     public void testGetGame_WhenIdValid() {
-        Game game = this.client.getGame("2753915549").block();
-        System.out.println(game.id());
+        this.client.getGame("2753915549").block();
+    }
+
+    /**
+     * This will test if we are able to detect an invalid id.
+     */
+    @Test
+    public void testGetGame_WhenIdInvalid() {
+        AtomicBoolean happened = new AtomicBoolean(false);
+
+        this.client.getGame("-1")
+                .doOnError(e -> happened.set(true))
+                .onErrorResume(e -> Mono.empty())
+                .block();
+
+        assertTrue(happened.get());
     }
 }

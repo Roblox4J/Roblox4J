@@ -3,7 +3,10 @@ package net.gestalt.roblox.client;
 import com.google.gson.Gson;
 import lombok.Getter;
 import lombok.Setter;
-import net.gestalt.exceptions.*;
+import net.gestalt.exceptions.InvalidAccountNameException;
+import net.gestalt.exceptions.InvalidCookieException;
+import net.gestalt.exceptions.InvalidIdException;
+import net.gestalt.exceptions.InvalidRequestException;
 import net.gestalt.http.OkRobloxClient;
 import net.gestalt.roblox.accounts.Account;
 import net.gestalt.roblox.games.Game;
@@ -16,8 +19,6 @@ import okhttp3.MediaType;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import reactor.core.publisher.Mono;
-
-import java.util.Arrays;
 
 @Getter
 @Setter
@@ -90,6 +91,8 @@ public class Client {
      * @param id The id of the group
      * @return A mono object containing the group.
      */
+    @SuppressWarnings("unused")
+    @ExcludeFromJacocoGeneratedReport
     public Mono<Group> getGroup(long id) {
         return this.getGroup(String.valueOf(id));
     }
@@ -133,6 +136,8 @@ public class Client {
      * @param id The id of the game.
      * @return The game mono object.
      */
+    @SuppressWarnings("unused")
+    @ExcludeFromJacocoGeneratedReport
     public Mono<Game> getGame(long id) {
         return this.getGame(String.valueOf(id));
     }
@@ -162,10 +167,8 @@ public class Client {
                             .build();
                     return this.okRobloxClient.execute(request, GamePayloads.GetUniversesPayload.class);
                 })
-                .map(universePayload -> {
-                    System.out.println(Arrays.toString(universePayload.getData()));
-                    return Game.fromData(universePayload.getData()[0], this.okRobloxClient);
-                });
+                .map(universePayload -> Game.fromData(universePayload.getData()[0], this.okRobloxClient))
+                .onErrorResume(ArrayIndexOutOfBoundsException.class, e -> Mono.error(InvalidIdException::new));
     }
 
     /**
