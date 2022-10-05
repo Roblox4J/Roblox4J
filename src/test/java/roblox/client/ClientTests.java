@@ -4,6 +4,7 @@ import net.gestalt.exceptions.InvalidAccountNameException;
 import net.gestalt.exceptions.InvalidCookieException;
 import net.gestalt.roblox.accounts.Account;
 import net.gestalt.roblox.client.Client;
+import net.gestalt.roblox.games.Game;
 import org.junit.Test;
 import reactor.core.publisher.Mono;
 
@@ -106,5 +107,11 @@ public class ClientTests {
                 .block();
 
         assertTrue(happened.get());
+    }
+
+    @Test
+    public void testGetGame_WhenIdValid() {
+        Game game = this.client.getGame("2753915549").block();
+        System.out.println(game.id());
     }
 }

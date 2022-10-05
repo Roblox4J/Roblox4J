@@ -6,14 +6,18 @@ import lombok.Setter;
 import net.gestalt.exceptions.*;
 import net.gestalt.http.OkRobloxClient;
 import net.gestalt.roblox.accounts.Account;
+import net.gestalt.roblox.games.Game;
 import net.gestalt.roblox.groups.Group;
 import net.gestalt.roblox.payloads.AccountPayloads;
+import net.gestalt.roblox.payloads.GamePayloads;
 import net.gestalt.roblox.payloads.GroupPayloads;
 import net.gestalt.utils.ExcludeFromJacocoGeneratedReport;
 import okhttp3.MediaType;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import reactor.core.publisher.Mono;
+
+import java.util.Arrays;
 
 @Getter
 @Setter
@@ -80,6 +84,7 @@ public class Client {
                 .map(accountPayload -> Account.fromData(accountPayload, this.okRobloxClient));
     }
 
+
     /**
      * This method will fetch the provided group.
      * @param id The id of the group
@@ -88,6 +93,7 @@ public class Client {
     public Mono<Group> getGroup(long id) {
         return this.getGroup(String.valueOf(id));
     }
+
     /**
      * This method will fetch a group.
      * @param id The id belonging to the group.
@@ -120,6 +126,46 @@ public class Client {
         return this.okRobloxClient.execute(request, AccountPayloads.AuthenticatedAccount.class, true)
                 .onErrorResume(e -> Mono.error(InvalidCookieException::new)) // The invalid cookie is the issue.
                 .flatMap(account -> this.getAccount(account.getId()));
+    }
+
+    /**
+     * This method will fetch the provided game.
+     * @param id The id of the game.
+     * @return The game mono object.
+     */
+    public Mono<Game> getGame(long id) {
+        return this.getGame(String.valueOf(id));
+    }
+
+    /**
+     * This method will fetch the provided game id.
+     * @param id The id belonging to the game.
+     * @return The game mono object.
+     */
+    public Mono<Game> getGame(String id) {
+        // This will contain two requests.
+        // One request for obtaining the universe id and one for the general game payload.
+        Request getUniverseIdRequest = new Request.Builder()
+                .url("https://api.roblox.com/universes/get-universe-containing-place?placeid=%s".formatted(id))
+                .build();
+
+        //noinspection SwitchStatementWithTooFewBranches
+        return this.okRobloxClient.execute(getUniverseIdRequest, GamePayloads.UniverseContainingPlacePayload.class)
+                .onErrorResume(InvalidRequestException.class, e -> switch (e.getCode()) {
+                    case 400 -> Mono.error(InvalidIdException::new);
+                    default -> Mono.error(e);
+                })
+                .flatMap(universe -> {
+                    long universeId = universe.getUniverseId();
+                    Request request = new Request.Builder()
+                            .url("https://games.roblox.com/v1/games?universeIds=%s".formatted(universeId))
+                            .build();
+                    return this.okRobloxClient.execute(request, GamePayloads.GetUniversesPayload.class);
+                })
+                .map(universePayload -> {
+                    System.out.println(Arrays.toString(universePayload.getData()));
+                    return Game.fromData(universePayload.getData()[0], this.okRobloxClient);
+                });
     }
 
     /**
