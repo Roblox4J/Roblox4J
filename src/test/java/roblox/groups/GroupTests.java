@@ -161,4 +161,26 @@ public class GroupTests {
         // Test.
         assertTrue(happened.get());
     }
+
+    /**
+     * This method will test if an error is thrown when we pay out Robux we don't have.
+     */
+    @Test
+    public void testPayout_WhenNoRobux() {
+        // Pre-test.
+        AtomicBoolean happened = new AtomicBoolean(false);
+
+        this.group.payout(2389955036L, 100)
+                .doOnError(RestrictedException.class, e -> happened.set(true))
+                .onErrorResume(RestrictedException.class, e -> Mono.empty())
+                .block();
+
+        // Test.
+        assertTrue(happened.get());
+    }
+
+    @Test
+    public void testDeleteWallPostsByAccount_WhenValid() {
+        this.group.deleteWallPostsByAccount(2389955036L).block();
+    }
 }

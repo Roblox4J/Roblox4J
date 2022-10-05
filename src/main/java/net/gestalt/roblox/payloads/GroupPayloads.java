@@ -1,6 +1,7 @@
 package net.gestalt.roblox.payloads;
 
 import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
 import lombok.Getter;
 import lombok.Setter;
 import net.gestalt.roblox.groups.Owner;
@@ -45,5 +46,25 @@ public interface GroupPayloads {
     class SetOwnerPayload {
         @Expose
         private long userId;
+    }
+    @Getter
+    @Setter
+    class PayAccountPayload {
+        @Getter
+        @Setter
+        public static class Recipient {
+            @Expose
+            private long recipientId;
+            @Expose
+            private String recipientType;
+            @Expose
+            private int amount;
+        }
+        @Expose
+        @SerializedName("PayoutType")
+        private String payoutType;
+        @Expose
+        @SerializedName("Recipients")
+        private Recipient[] recipients;
     }
 }

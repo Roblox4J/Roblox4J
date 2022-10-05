@@ -247,6 +247,102 @@ public record Group(long id, String name, String description, int memberCount, b
     }
 
     /**
+     * This method will pay out the provided amount of robux to the account.
+     * @param id The id of the account.
+     * @param robux The amount of robux.
+     * @return The payout mono object.
+     */
+    public @NotNull Mono<Void> payout(long id, int robux) {
+        // Make the payload.
+        GroupPayloads.PayAccountPayload payAccountPayload = new GroupPayloads.PayAccountPayload();
+        payAccountPayload.setPayoutType("FixedAmount");
+        GroupPayloads.PayAccountPayload.Recipient recipient = new GroupPayloads.PayAccountPayload.Recipient();
+        recipient.setRecipientId(id);
+        recipient.setRecipientType("User");
+        recipient.setAmount(robux);
+        payAccountPayload.setRecipients(new GroupPayloads.PayAccountPayload.Recipient[]{ recipient });
+
+        Request request = new Request.Builder()
+                .url("https://groups.roblox.com/v1/groups/%s/payouts".formatted(this.id))
+                .post(RequestBody.create(GSON.toJson(payAccountPayload), MediaType.parse("application/json")))
+                .build();
+
+        return this.okRobloxClient.<Void>execute(request, null, true)
+                .onErrorResume(InvalidRequestException.class, e -> switch (e.getCode()) {
+                    case 12, 25 -> Mono.error(InsufficientRobuxException::new);
+                    case 23 -> Mono.error(NoPermissionException::new);
+                    case 28 -> Mono.error(ChangedTooRecentlyException::new);
+                    case 34 -> Mono.error(RestrictedException::new);
+                    default -> Mono.error(e);
+                });
+    }
+
+    /**
+     * This method will send robux to the provided id.
+     * @param id The id of the account.
+     * @param robux The amount of robux to payout.
+     * @return The payout mono object.
+     */
+    @SuppressWarnings("unused")
+    @ExcludeFromJacocoGeneratedReport
+    public @NotNull Mono<Void> payout(String id, int robux) {
+        return this.payout(Long.parseLong(id), robux);
+    }
+
+    /**
+     * This method will send robux to the account.
+     * @param account The account.
+     * @param robux The amount of robux to send.
+     * @return The payout mono object.
+     */
+    @SuppressWarnings("unused")
+    @ExcludeFromJacocoGeneratedReport
+    public @NotNull Mono<Void> payout(@NotNull Account account, int robux) {
+        return this.payout(account.id(), robux);
+    }
+
+    /**
+     * This method will delete all posts sent by the provided id.
+     * @param id The poster id.
+     * @return The delete mono object.
+     */
+    public @NotNull Mono<Void> deleteWallPostsByAccount(String id) {
+        Request request = new Request.Builder()
+                .url("https://groups.roblox.com/v1/groups/%s/wall/users/%s/posts".formatted(this.id, id))
+                .delete()
+                .build();
+
+        return this.okRobloxClient.<Void>execute(request, null, true)
+                .onErrorResume(InvalidRequestException.class, e -> switch (e.getCode()) {
+                    case 2 -> Mono.error(NoPermissionException::new);
+                    case 6 -> Mono.error(InvalidIdException::new);
+                    default -> Mono.error(e);
+                });
+    }
+
+    /**
+     * This method will delete all posts by the provided id.
+     * @param id The id of the poster.
+     * @return The delete mono object.
+     */
+    @SuppressWarnings("unused")
+    @ExcludeFromJacocoGeneratedReport
+    public @NotNull Mono<Void> deleteWallPostsByAccount(long id) {
+        return this.deleteWallPostsByAccount(String.valueOf(id));
+    }
+
+    /**
+     * This method will delete all posts sent by the account.
+     * @param account The account that had sent the posts.
+     * @return The delete mono object.
+     */
+    @SuppressWarnings("unused")
+    @ExcludeFromJacocoGeneratedReport
+    public @NotNull Mono<Void> deleteWallPostsByAccount(@NotNull Account account) {
+        return this.deleteWallPostsByAccount(String.valueOf(account.id()));
+    }
+
+    /**
      * This method will load a group object from a payload.
      * @param groupPayload The payload.
      * @param okRobloxClient The Roblox HTTP client used to receive the payload.
