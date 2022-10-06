@@ -20,6 +20,8 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import reactor.core.publisher.Mono;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 @Getter
 @Setter
 public class Client {
@@ -154,6 +156,8 @@ public class Client {
                 .url("https://api.roblox.com/universes/get-universe-containing-place?placeid=%s".formatted(id))
                 .build();
 
+        AtomicLong universeId = new AtomicLong();
+
         //noinspection SwitchStatementWithTooFewBranches
         return this.okRobloxClient.execute(getUniverseIdRequest, GamePayloads.UniverseContainingPlacePayload.class)
                 .onErrorResume(InvalidRequestException.class, e -> switch (e.getCode()) {
@@ -161,13 +165,14 @@ public class Client {
                     default -> Mono.error(e);
                 })
                 .flatMap(universe -> {
-                    long universeId = universe.getUniverseId();
+                    universeId.set(universe.getUniverseId());
                     Request request = new Request.Builder()
                             .url("https://games.roblox.com/v1/games?universeIds=%s".formatted(universeId))
                             .build();
                     return this.okRobloxClient.execute(request, GamePayloads.GetUniversesPayload.class);
                 })
-                .map(universePayload -> Game.fromData(universePayload.getData()[0], this.okRobloxClient))
+                .map(universePayload -> Game.fromData(universePayload.getData()[0], universeId.get(),
+                        this.okRobloxClient))
                 .onErrorResume(ArrayIndexOutOfBoundsException.class, e -> Mono.error(InvalidIdException::new));
     }
 

@@ -3,6 +3,7 @@ package net.gestalt.roblox.payloads;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import lombok.Getter;
+import lombok.Setter;
 
 public interface GamePayloads {
     @Getter
@@ -29,5 +30,17 @@ public interface GamePayloads {
     class GetUniversesPayload {
         @Expose
         private UniversePayload[] data;
+    }
+    @Getter
+    @Setter
+    class SetVotePayload {
+        @Expose
+        private boolean vote;
+    }
+    @Getter
+    @Setter
+    class SetFavoritedPayload {
+        @Expose
+        private boolean isFavorited;
     }
 }
