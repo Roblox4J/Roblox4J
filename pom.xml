@@ -4,9 +4,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>net.gestalt</groupId>
-    <artifactId>Roblox4J</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <groupId>roblox4j</groupId>
+    <artifactId>roblox4j</artifactId>
+    <version>1.0</version>
+
+    <name>Roblox4J</name>
+    <description>A reactive based Java wrapper for the Roblox API</description>
+    <url>https://github.com/GestaIt/Roblox4J</url>
 
     <dependencies>
         <!-- ALWAYS PLACE THIS ON TOP OF THE DEPENDENCY LIST -->
