@@ -10,8 +10,12 @@ jobs:
     name: 'Run Tests'
     steps:
       - uses: actions/checkout@v3
-      # USES JAVA..
-      - run: mvn test "-DrobloSecurity=${{ env.robloSecurity }}"
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'corretto'
+          java-version: '17'
+        
+      - run: mvn -B package 
         env:
           robloSecurity: ${{ secrets.ROBLOSECURITY }}
       - name: jacoco-badge-generator
