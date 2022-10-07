@@ -14,7 +14,7 @@ jobs:
         with:
           distribution: 'corretto'
           java-version: '17'
-      - run: mvn test "-f C:\Users\Administrator\actions-runner\_work\Roblox4J\Roblox4J" "-DrobloSecurity=${{ env.robloSecurity }}"
+      - run: mvn test -DrobloSecurity="${{ env.robloSecurity }}"
         env:
           robloSecurity: ${{ secrets.ROBLOSECURITY }}
       - name: jacoco-badge-generator
