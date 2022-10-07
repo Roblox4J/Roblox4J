@@ -2,7 +2,7 @@ package http;
 
 import com.google.gson.annotations.Expose;
 import lombok.Getter;
-import net.gestalt.http.OkRobloxClient;
+import roblox4j.http.OkRobloxClient;
 import okhttp3.Request;
 import org.junit.Test;
 
@@ -15,20 +15,7 @@ class EchoResponse {
     private String url;
 }
 
-@Getter
-class NestedHeaders {
-    @Expose
-    private String host;
-}
-
-@Getter
-class NestedResponse {
-    @Expose
-    private NestedHeaders headers;
-}
-
 public class OkRobloxClientTests {
-    private final String ECHO_URL = "https://postman-echo.com/get";
     private final OkRobloxClient okRobloxClient = new OkRobloxClient();
 
     /**
@@ -37,6 +24,7 @@ public class OkRobloxClientTests {
     @Test
     public void testExecute_WhenResponseValid() {
         // Pre-test.
+        String ECHO_URL = "https://postman-echo.com/get";
         Request request = new Request.Builder()
                 .url(ECHO_URL)
                 .build();
@@ -45,21 +33,5 @@ public class OkRobloxClientTests {
         // Tests.
         assertNotNull(response);
         assertEquals(response.getUrl(), "https://postman-echo.com/get");
-    }
-
-    /**
-     * This will test if the parser recognizes nested information.
-     */
-    @Test
-    public void testExecute_WhenBodyNested() {
-        // Pre-test.
-        Request request = new Request.Builder()
-                .url(ECHO_URL)
-                .build();
-        NestedResponse response = this.okRobloxClient.execute(request, NestedResponse.class).block();
-
-        // Tests.
-        assertNotNull(response);
-        assertEquals(response.getHeaders().getHost(), "postman-echo.com");
     }
 }

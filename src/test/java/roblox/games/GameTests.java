@@ -1,8 +1,8 @@
 package roblox.games;
 
-import net.gestalt.exceptions.InvalidCookieException;
-import net.gestalt.roblox.client.Client;
-import net.gestalt.roblox.games.Game;
+import roblox4j.exceptions.InvalidCookieException;
+import roblox4j.roblox.client.Client;
+import roblox4j.roblox.games.Game;
 import org.junit.Test;
 
 import static org.junit.Assert.assertNotNull;

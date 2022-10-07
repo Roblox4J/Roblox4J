@@ -1,8 +1,8 @@
 package roblox.groups;
 
-import net.gestalt.exceptions.*;
-import net.gestalt.roblox.client.Client;
-import net.gestalt.roblox.groups.Group;
+import roblox4j.exceptions.*;
+import roblox4j.roblox.client.Client;
+import roblox4j.roblox.groups.Group;
 import org.junit.Test;
 import reactor.core.publisher.Mono;
 
@@ -163,7 +163,7 @@ public class GroupTests {
     }
 
     /**
-     * This method will test if an error is thrown when we pay out Robux we don't have.
+     * This method will test if an error is thrown when we pay Robux we don't have.
      */
     @Test
     public void testPayout_WhenNoRobux() {

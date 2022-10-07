@@ -1,8 +1,8 @@
 package roblox.accounts;
 
-import net.gestalt.exceptions.InvalidCookieException;
-import net.gestalt.roblox.accounts.Account;
-import net.gestalt.roblox.client.Client;
+import roblox4j.exceptions.InvalidCookieException;
+import roblox4j.roblox.accounts.Account;
+import roblox4j.roblox.client.Client;
 import org.junit.Test;
 
 import static org.junit.Assert.*;

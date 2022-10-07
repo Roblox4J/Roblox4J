@@ -1,9 +1,9 @@
 package roblox.client;
 
-import net.gestalt.exceptions.InvalidAccountNameException;
-import net.gestalt.exceptions.InvalidCookieException;
-import net.gestalt.roblox.accounts.Account;
-import net.gestalt.roblox.client.Client;
+import roblox4j.exceptions.InvalidAccountNameException;
+import roblox4j.exceptions.InvalidCookieException;
+import roblox4j.roblox.accounts.Account;
+import roblox4j.roblox.client.Client;
 import org.junit.Test;
 import reactor.core.publisher.Mono;
 
@@ -13,7 +13,7 @@ import static org.junit.Assert.*;
 
 public class ClientTests {
     private static final long ROBLOX_ID = 1;
-    Client client = new Client();
+    final Client client = new Client();
 
     /**
      * This will test if the HTTP Roblox client is able to detect if an error occurs in the API.
