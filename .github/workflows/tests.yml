@@ -15,7 +15,7 @@ jobs:
           distribution: 'corretto'
           java-version: '17'
         
-      - run: mvn -B package -D robloSecurity="${{ env.robloSecurity }}"
+      - run: mvn -B package -D robloSecurity=$"${{ env.robloSecurity }}"
         env:
           robloSecurity: ${{ secrets.ROBLOSECURITY }}
       - name: jacoco-badge-generator
