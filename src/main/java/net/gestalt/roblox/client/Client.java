@@ -11,9 +11,11 @@ import net.gestalt.http.OkRobloxClient;
 import net.gestalt.roblox.accounts.Account;
 import net.gestalt.roblox.games.Game;
 import net.gestalt.roblox.groups.Group;
+import net.gestalt.roblox.models.Model;
 import net.gestalt.roblox.payloads.AccountPayloads;
 import net.gestalt.roblox.payloads.GamePayloads;
 import net.gestalt.roblox.payloads.GroupPayloads;
+import net.gestalt.roblox.payloads.ModelPayloads;
 import net.gestalt.utils.ExcludeFromJacocoGeneratedReport;
 import okhttp3.MediaType;
 import okhttp3.Request;
@@ -151,7 +153,7 @@ public class Client {
      */
     public Mono<Game> getGame(String id) {
         // This will contain two requests.
-        // One request for obtaining the universe id and one for the general game payload.
+        // One request to obtain the universe id and one for the general game payload.
         Request getUniverseIdRequest = new Request.Builder()
                 .url("https://api.roblox.com/universes/get-universe-containing-place?placeid=%s".formatted(id))
                 .build();
@@ -174,6 +176,31 @@ public class Client {
                 .map(universePayload -> Game.fromData(universePayload.getData()[0], universeId.get(),
                         this.okRobloxClient))
                 .onErrorResume(ArrayIndexOutOfBoundsException.class, e -> Mono.error(InvalidIdException::new));
+    }
+
+    /**
+     * This method will fetch a model from it's id.
+     * @param id The id of the model
+     * @return The model mono object.
+     */
+    @SuppressWarnings("unused")
+    @ExcludeFromJacocoGeneratedReport
+    public Mono<Model> getModel(long id) {
+        return this.getModel(String.valueOf(id));
+    }
+
+    /**
+     * This method will fetch a model.
+     * @param id The id of the model
+     * @return The model mono object.
+     */
+    public Mono<Model> getModel(String id) {
+        Request request = new Request.Builder()
+                .url("https://economy.roblox.com/v2/assets/%s/details".formatted(id))
+                .build();
+
+        return this.okRobloxClient.execute(request, ModelPayloads.GetInfoPayload.class)
+                .map(infoPayload -> Model.fromData(infoPayload, this.okRobloxClient));
     }
 
     /**
