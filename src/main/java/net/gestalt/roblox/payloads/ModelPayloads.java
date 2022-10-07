@@ -3,8 +3,17 @@ package net.gestalt.roblox.payloads;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import lombok.Getter;
+import lombok.Setter;
 
 public interface ModelPayloads {
+    @Getter
+    @Setter
+    class PurchasePayload {
+        @Expose
+        private int expectedCurrency, expectedPrice;
+        @Expose
+        private long expectedSellerId;
+    }
     @Getter
     class CreatorPayload {
         @Expose

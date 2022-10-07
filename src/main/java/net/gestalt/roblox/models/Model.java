@@ -1,7 +1,10 @@
 package net.gestalt.roblox.models;
 
+import com.google.gson.Gson;
 import net.gestalt.http.OkRobloxClient;
+import net.gestalt.roblox.accounts.Account;
 import net.gestalt.roblox.payloads.ModelPayloads;
+import net.gestalt.utils.ExcludeFromJacocoGeneratedReport;
 import okhttp3.MediaType;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -14,6 +17,8 @@ public record Model(long targetId, String productType, long assetId, long produc
                     String updated, int priceInRobux, int priceInTickets, long sales, boolean isNew, boolean isForSale,
                     boolean isPublicDomain, boolean isLimited, boolean isLimitedUnique, int remaining,
                     int minimumMembershipLevel, int contentRatingTypeId, OkRobloxClient okRobloxClient) {
+    private static final Gson GSON = new Gson();
+
     /**
      * This method will toggle a favorite on the model.
      * @return The favorite mono object.
@@ -49,10 +54,16 @@ public record Model(long targetId, String productType, long assetId, long produc
      * @return The buy mono object.
      */
     public Mono<Void> buy() {
+        // Create the payload.
+        ModelPayloads.PurchasePayload purchasePayload = new ModelPayloads.PurchasePayload();
+        purchasePayload.setExpectedCurrency(3);
+        purchasePayload.setExpectedPrice(this.priceInRobux);
+        purchasePayload.setExpectedSellerId(this.creator.getId());
+
         // Create the request.
         Request request = new Request.Builder()
                 .url("https://economy.roblox.com/v1/purchases/products/%s".formatted(this.productId))
-                .post(RequestBody.create(new byte[0], null))
+                .post(RequestBody.create(GSON.toJson(purchasePayload), MediaType.parse("application/json")))
                 .build();
 
         return this.okRobloxClient.execute(request, null, true);
@@ -71,6 +82,41 @@ public record Model(long targetId, String productType, long assetId, long produc
                 .build();
 
         return this.okRobloxClient.execute(request, null, true);
+    }
+
+    /**
+     * This method will check if the provided id owns this asset.
+     * @param id The id of the other account.
+     * @return Whether they own it or not.
+     */
+    public Mono<Boolean> isOwned(String id) {
+        Request request = new Request.Builder()
+                .url("https://inventory.roblox.com/v1/users/%s/items/Asset/%s/is-owned".formatted(id, this.assetId))
+                .build();
+
+        return this.okRobloxClient.execute(request, Boolean.class);
+    }
+
+    /**
+     * This method will check if the provided id owns this asset.
+     * @param id The id of the other account.
+     * @return Whether they own it or not.
+     */
+    @SuppressWarnings("unused")
+    @ExcludeFromJacocoGeneratedReport
+    public Mono<Boolean> isOwned(long id) {
+        return this.isOwned(String.valueOf(id));
+    }
+
+    /**
+     * This method will check if the provided account owns this asset.
+     * @param account The account.
+     * @return Whether they own it or not.
+     */
+    @SuppressWarnings("unused")
+    @ExcludeFromJacocoGeneratedReport
+    public Mono<Boolean> isOwned(@NotNull Account account) {
+        return this.isOwned(String.valueOf(account.id()));
     }
 
     /**

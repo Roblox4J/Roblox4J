@@ -179,7 +179,7 @@ public class Client {
     }
 
     /**
-     * This method will fetch a model from it's id.
+     * This method will fetch a model from its id.
      * @param id The id of the model
      * @return The model mono object.
      */
@@ -199,7 +199,12 @@ public class Client {
                 .url("https://economy.roblox.com/v2/assets/%s/details".formatted(id))
                 .build();
 
+        //noinspection SwitchStatementWithTooFewBranches
         return this.okRobloxClient.execute(request, ModelPayloads.GetInfoPayload.class)
+                .onErrorResume(InvalidRequestException.class, e -> switch (e.getCode()) {
+                    case 5 -> Mono.error(InvalidIdException::new);
+                    default -> Mono.error(e);
+                })
                 .map(infoPayload -> Model.fromData(infoPayload, this.okRobloxClient));
     }
 

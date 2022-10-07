@@ -4,7 +4,6 @@ import net.gestalt.exceptions.InvalidAccountNameException;
 import net.gestalt.exceptions.InvalidCookieException;
 import net.gestalt.roblox.accounts.Account;
 import net.gestalt.roblox.client.Client;
-import net.gestalt.roblox.games.Game;
 import org.junit.Test;
 import reactor.core.publisher.Mono;
 
@@ -47,7 +46,7 @@ public class ClientTests {
     }
 
     /**
-     * This will test if the client is able to find a username by it's username.
+     * This will test if the client is able to find a username by its username.
      */
     @Test
     public void testGetAccountByUsername_WhenUsernameValid() {
@@ -125,6 +124,29 @@ public class ClientTests {
         AtomicBoolean happened = new AtomicBoolean(false);
 
         this.client.getGame("-1")
+                .doOnError(e -> happened.set(true))
+                .onErrorResume(e -> Mono.empty())
+                .block();
+
+        assertTrue(happened.get());
+    }
+
+    /**
+     * This will test if we are able to retrieve a model.
+     */
+    @Test
+    public void testGetModel_WhenIdValid() {
+        this.client.getModel("1351862808").block();
+    }
+
+    /**
+     * This will test if the invalid id error is thrown when we try to fetch an invalid model.
+     */
+    @Test
+    public void testGetModel_WhenIdInvalid() {
+        AtomicBoolean happened = new AtomicBoolean(false);
+
+        this.client.getModel("-1")
                 .doOnError(e -> happened.set(true))
                 .onErrorResume(e -> Mono.empty())
                 .block();
